@@ -36,9 +36,9 @@ static ZSTD_parameters zstd_params(void)
 {
 	if (compression_level == 0)
 		compression_level = 1;
-	if (compression_level > ZSTD_maxCLevel())
-		compression_level = ZSTD_maxCLevel();
-	return ZSTD_getParams(compression_level, 0, 0);
+	if (compression_level > zstd_max_clevel())
+		compression_level = zstd_max_clevel();
+	return zstd_get_params(compression_level, PAGE_SIZE);
 }
 
 static int zstd_comp_init(struct zstd_ctx *ctx)
