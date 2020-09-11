@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0+ OR BSD-3-Clause */
 /*
  * Copyright (c) 2016-present, Yann Collet, Facebook, Inc.
  * All rights reserved.
@@ -39,46 +40,12 @@
  *  - a single step, reusing a dictionary (described as Fast dictionary API)
  ******************************************************************************/
 
-/*======  Helper functions  ======*/
+/* ======   Dependency   ====== */
+#include <linux/types.h>
+#include <linux/zstd_errors.h>
+#include <linux/zstd_lib.h>
 
-/**
- * enum ZSTD_ErrorCode - zstd error codes
- *
- * Functions that return size_t can be checked for errors using ZSTD_isError()
- * and the ZSTD_ErrorCode can be extracted using ZSTD_getErrorCode().
- */
-typedef enum {
-	ZSTD_error_no_error,
-	ZSTD_error_GENERIC,
-	ZSTD_error_prefix_unknown,
-	ZSTD_error_version_unsupported,
-	ZSTD_error_parameter_unknown,
-	ZSTD_error_frameParameter_unsupported,
-	ZSTD_error_frameParameter_unsupportedBy32bits,
-	ZSTD_error_frameParameter_windowTooLarge,
-	ZSTD_error_compressionParameter_unsupported,
-	ZSTD_error_init_missing,
-	ZSTD_error_memory_allocation,
-	ZSTD_error_stage_wrong,
-	ZSTD_error_dstSize_tooSmall,
-	ZSTD_error_srcSize_wrong,
-	ZSTD_error_corruption_detected,
-	ZSTD_error_checksum_wrong,
-	ZSTD_error_tableLog_tooLarge,
-	ZSTD_error_maxSymbolValue_tooLarge,
-	ZSTD_error_maxSymbolValue_tooSmall,
-	ZSTD_error_dictionary_corrupted,
-	ZSTD_error_dictionary_wrong,
-	ZSTD_error_dictionaryCreation_failed,
-	ZSTD_error_maxCode
-} ZSTD_ErrorCode;
-
-/**
- * ZSTD_maxCLevel() - maximum compression level available
- *
- * Return: Maximum compression level available.
- */
-int ZSTD_maxCLevel(void);
+/* ======   Helper Functions   ====== */
 /**
  * ZSTD_compressBound() - maximum compressed size in worst case scenario
  * @srcSize: The size of the data to compress.
@@ -897,42 +864,19 @@ unsigned int ZSTD_isFrame(const void *buffer, size_t size);
 unsigned int ZSTD_getDictID_fromDict(const void *dict, size_t dictSize);
 
 /**
- * ZSTD_getDictID_fromDDict() - returns the dictionary id stored in a ZSTD_DDict
- * @ddict: The ddict to find the id of.
- *
- * Return: The dictionary id stored within `ddict` or 0 if the dictionary is not
- *         a zstd dictionary. If it returns 0 `ddict` will be loaded as a
- *         content-only dictionary.
- */
-unsigned int ZSTD_getDictID_fromDDict(const ZSTD_DDict *ddict);
-
-/**
- * ZSTD_getDictID_fromFrame() - returns the dictionary id stored in a zstd frame
- * @src:     Source buffer. It must be a zstd encoded frame.
- * @srcSize: The size of the source buffer. It must be at least as large as the
- *           frame header. `ZSTD_frameHeaderSize_max` is always large enough.
- *
- * Return:   The dictionary id required to decompress the frame stored within
- *           `src` or 0 if the dictionary id could not be decoded. It can return
- *           0 if the frame does not require a dictionary, the dictionary id
- *           wasn't stored in the frame, `src` is not a zstd frame, or `srcSize`
- *           is too small.
- */
-unsigned int ZSTD_getDictID_fromFrame(const void *src, size_t srcSize);
-
-/**
- * struct ZSTD_frameParams - zstd frame parameters stored in the frame header
- * @frameContentSize: The frame content size, or 0 if not present.
+ * struct zstd_frame_params - zstd frame parameters stored in the frame header
+ * @frameContentSize: The frame content size, or ZSTD_CONTENTSIZE_UNKNOWN if not
+ *                    present.
  * @windowSize:       The window size, or 0 if the frame is a skippable frame.
+ * @blockSizeMax:     The maximum block size.
+ * @frameType:        The frame type (zstd or skippable)
+ * @headerSize:       The size of the frame header.
  * @dictID:           The dictionary id, or 0 if not present.
  * @checksumFlag:     Whether a checksum was used.
+ *
+ * See zstd_lib.h.
  */
-typedef struct {
-	unsigned long long frameContentSize;
-	unsigned int windowSize;
-	unsigned int dictID;
-	unsigned int checksumFlag;
-} ZSTD_frameParams;
+typedef ZSTD_frameHeader zstd_frame_header;
 
 /**
  * ZSTD_getFrameParams() - extracts parameters from a zstd or skippable frame
