@@ -1211,6 +1211,7 @@ static enum power_supply_property smb2_usb_props[] = {
 	POWER_SUPPLY_PROP_TIME_TO_FULL_NOW,
 	POWER_SUPPLY_PROP_CYCLE_COUNT,
 	POWER_SUPPLY_PROP_FCC_STEPPER_ENABLE,
+	POWER_SUPPLY_PROP_QUICK_CHARGE_TYPE,
 };
 
 #ifdef VENDOR_EDIT
@@ -1404,6 +1405,9 @@ static int smb2_usb_get_prop(struct power_supply *psy,
 			val->intval = POWER_SUPPLY_TYPE_USB_PD;
 		else
 			val->intval = chg->real_charger_type;
+		break;
+	case POWER_SUPPLY_PROP_QUICK_CHARGE_TYPE:
+		val->intval = smblib_get_quick_charge_type(chg);
 		break;
 	case POWER_SUPPLY_PROP_TYPEC_MODE:
 		if (chg->connector_type == POWER_SUPPLY_CONNECTOR_MICRO_USB)
