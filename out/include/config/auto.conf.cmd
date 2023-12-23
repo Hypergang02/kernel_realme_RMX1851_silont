@@ -1,4 +1,5 @@
 deps_config := \
+	arch/arm64/hotplug/Kconfig \
 	lib/fonts/Kconfig \
 	lib/xz/Kconfig \
 	lib/Kconfig \

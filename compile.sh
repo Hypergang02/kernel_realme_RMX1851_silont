@@ -19,6 +19,9 @@ function clean() {
     rm -rf out
 }
 
+export KBUILD_BUILD_HOST=Silont
+export KBUILD_BUILD_USER="AkuFarish"
+
 function build_kernel() {
     export PATH="/workspace/proton-clang/bin:$PATH"
     make -j$(nproc --all) O=out ARCH=arm64 silont_defconfig
