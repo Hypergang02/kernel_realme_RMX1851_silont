@@ -1354,6 +1354,8 @@ source "drivers/cpufreq/Kconfig"
 
 endmenu
 
+source "arch/arm64/hotplug/Kconfig"
+
 source "net/Kconfig"
 
 source "drivers/Kconfig"
@@ -1377,4 +1379,3 @@ endif
 
 source "lib/Kconfig"
 
-source "arch/arm64/hotplug/Kconfig"

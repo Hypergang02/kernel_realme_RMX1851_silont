@@ -1,5 +1,4 @@
 deps_config := \
-	arch/arm64/hotplug/Kconfig \
 	lib/fonts/Kconfig \
 	lib/xz/Kconfig \
 	lib/Kconfig \
@@ -1125,6 +1124,7 @@ deps_config := \
 	net/unix/Kconfig \
 	net/packet/Kconfig \
 	net/Kconfig \
+	arch/arm64/hotplug/Kconfig \
 	drivers/cpufreq/Kconfig.powerpc \
 	drivers/cpufreq/Kconfig.arm \
 	drivers/cpufreq/Kconfig.x86 \
