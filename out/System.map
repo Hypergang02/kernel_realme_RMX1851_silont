@@ -72786,7 +72786,7 @@ ffffff8009644918 D __security_initcall_start
 ffffff8009644920 D __initramfs_start
 ffffff8009644920 d __irf_start
 ffffff8009644920 D __security_initcall_end
-ffffff80096449a5 d __irf_end
+ffffff80096449a6 d __irf_end
 ffffff80096449a8 D __initramfs_size
 ffffff8009645000 D __per_cpu_load
 ffffff8009645000 D __per_cpu_start
