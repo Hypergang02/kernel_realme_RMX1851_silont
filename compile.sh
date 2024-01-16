@@ -19,12 +19,12 @@ function clean() {
     rm -rf out
 }
 
-export KBUILD_BUILD_HOST=Silont
+export KBUILD_BUILD_HOST=Virtuosa
 export KBUILD_BUILD_USER="AkuFarish"
 
 function build_kernel() {
-    export PATH="/home/akufarish/proton-clang/bin:$PATH"
-    make -j$(nproc --all) O=out ARCH=arm64 silont_defconfig
+    export PATH="/home/akufarish/proton/bin:$PATH"
+    make -j$(nproc --all) O=out ARCH=arm64 virtuosa_defconfig
     make -j$(nproc --all) ARCH=arm64 O=out \
                           CC=clang \
                           CROSS_COMPILE=aarch64-linux-gnu- \
