@@ -1,6 +1,11 @@
 #!/bin/bash
 # Copyright cc 2023 sirnewbies
 
+git submodule init
+
+git submodule update --remote
+
+
 # setup color
 red='\033[0;31m'
 green='\e[0;32m'
