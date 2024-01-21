@@ -1162,7 +1162,7 @@ deps_config := \
 include/config/auto.conf: \
 	$(deps_config)
 
-ifneq "$(KERNELVERSION)" "4.9.258"
+ifneq "$(KERNELVERSION)" "4.9.270"
 include/config/auto.conf: FORCE
 endif
 ifneq "$(PATCHLEVEL)" "9"
