@@ -535,9 +535,17 @@ static struct attribute *sugov_attributes[] = {
 	NULL
 };
 
+static void sugov_tunables_free(struct kobject *kobj)
+{
+	struct gov_attr_set *attr_set = container_of(kobj, struct gov_attr_set, kobj);
+
+	kfree(to_sugov_tunables(attr_set));
+}
+
 static struct kobj_type sugov_tunables_ktype = {
 	.default_attrs = sugov_attributes,
 	.sysfs_ops = &governor_sysfs_ops,
+	.release = &sugov_tunables_free,
 };
 
 /********************** cpufreq governor interface *********************/
@@ -647,12 +655,48 @@ static void sugov_tunables_save(struct cpufreq_policy *policy,
 	cached->down_rate_limit_us = tunables->down_rate_limit_us;
 }
 
-static void sugov_tunables_free(struct sugov_tunables *tunables)
+static void sugov_tunables_save(struct cpufreq_policy *policy,
+		struct sugov_tunables *tunables)
+{
+	int cpu;
+	struct sugov_tunables *cached = per_cpu(cached_tunables, policy->cpu);
+
+	if (!have_governor_per_policy())
+		return;
+
+	if (!cached) {
+		cached = kzalloc(sizeof(*tunables), GFP_KERNEL);
+		if (!cached) {
+			pr_warn("Couldn't allocate tunables for caching\n");
+			return;
+		}
+		for_each_cpu(cpu, policy->related_cpus)
+			per_cpu(cached_tunables, cpu) = cached;
+	}
+
+	cached->up_rate_limit_us = tunables->up_rate_limit_us;
+	cached->down_rate_limit_us = tunables->down_rate_limit_us;
+}
+
+static void sugov_clear_global_tunables(void)
+
 {
 	if (!have_governor_per_policy())
 		global_tunables = NULL;
+}
 
-	kfree(tunables);
+
+static void sugov_tunables_restore(struct cpufreq_policy *policy)
+{
+	struct sugov_policy *sg_policy = policy->governor_data;
+	struct sugov_tunables *tunables = sg_policy->tunables;
+	struct sugov_tunables *cached = per_cpu(cached_tunables, policy->cpu);
+
+	if (!cached)
+		return;
+
+	tunables->up_rate_limit_us = cached->up_rate_limit_us;
+	tunables->down_rate_limit_us = cached->down_rate_limit_us;
 }
 
 static void sugov_tunables_restore(struct cpufreq_policy *policy)
@@ -735,10 +779,11 @@ out:
 
 fail:
 	policy->governor_data = NULL;
-	sugov_tunables_free(tunables);
+	sugov_clear_global_tunables();
 
 stop_kthread:
 	sugov_kthread_stop(sg_policy);
+
 
 free_sg_policy:
 	mutex_unlock(&global_tunables_lock);
@@ -764,7 +809,7 @@ static void sugov_exit(struct cpufreq_policy *policy)
 	policy->governor_data = NULL;
 	if (!count) {
 		sugov_tunables_save(policy, tunables);
-		sugov_tunables_free(tunables);
+		sugov_clear_global_tunables();
 	}
 
 	mutex_unlock(&global_tunables_lock);
