@@ -496,19 +496,33 @@ static int sr9700_android_rx_fixup(struct usbnet *dev, struct sk_buff *skb)
 	status = skb->data[0];
 	len = (skb->data[1] | (skb->data[2] << 8)) - 4;
 
-	if (unlikely(status & 0xbf)) {
-		if (status & 0x01) dev->net->stats.rx_fifo_errors++;
-		if (status & 0x02) dev->net->stats.rx_crc_errors++;
-		if (status & 0x04) dev->net->stats.rx_frame_errors++;
-		if (status & 0x20) dev->net->stats.rx_missed_errors++;
-		if (status & 0x90) dev->net->stats.rx_length_errors++;
-		return 0;
-	}
+		if (len > ETH_FRAME_LEN || len > skb->len)
+			return 0;
 
-	skb_pull(skb, 3);
-	skb_trim(skb, len);
+		/* the last packet of current skb */
+		if (skb->len == (len + SR_RX_OVERHEAD))	{
+			skb_pull(skb, 3);
+			skb->len = len;
+			skb_set_tail_pointer(skb, len);
+			skb->truesize = len + sizeof(struct sk_buff);
+			return 2;
+		}
 
-	return 1;
+		/* skb_clone is used for address align */
+		sr_skb = skb_clone(skb, GFP_ATOMIC);
+		if (!sr_skb)
+			return 0;
+
+		sr_skb->len = len;
+		sr_skb->data = skb->data + 3;
+		skb_set_tail_pointer(sr_skb, len);
+		sr_skb->truesize = len + sizeof(struct sk_buff);
+		usbnet_skb_return(dev, sr_skb);
+
+		skb_pull(skb, len + SR_RX_OVERHEAD);
+	};
+
+	return 0;
 }
 
 static struct sk_buff *sr9700_android_tx_fixup(struct usbnet *dev, struct sk_buff *skb, gfp_t flags)
