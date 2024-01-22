@@ -477,7 +477,7 @@ out:
 
 static int sr9700_android_rx_fixup(struct usbnet *dev, struct sk_buff *skb)
 {
-	u8 status;
+	struct sk_buff *sr_skb;
 	int len;
 
 	/* format:
@@ -493,8 +493,13 @@ static int sr9700_android_rx_fixup(struct usbnet *dev, struct sk_buff *skb)
 		return 0;
 	}
 
-	status = skb->data[0];
-	len = (skb->data[1] | (skb->data[2] << 8)) - 4;
+	/* one skb may contains multiple packets */
+	while (skb->len > SR_RX_OVERHEAD) {
+		if (skb->data[0] != 0x40)
+			return 0;
+
+		/* ignore the CRC length */
+		len = (skb->data[1] | (skb->data[2] << 8)) - 4;
 
 		if (len > ETH_FRAME_LEN || len > skb->len)
 			return 0;
