@@ -26,6 +26,7 @@ function clean() {
 
 export KBUILD_BUILD_HOST=Virtuosa
 export KBUILD_BUILD_USER="AkuFarish"
+export KBUILD_COMPILER_STRING="Virtuosa"
 
 function build_kernel() {
     export PATH="/home/akufarish/proton/bin:$PATH"
