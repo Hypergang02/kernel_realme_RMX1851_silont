@@ -5,7 +5,6 @@ git submodule init
 
 git submodule update --remote
 
-
 # setup color
 red='\033[0;31m'
 green='\e[0;32m'
@@ -24,12 +23,11 @@ function clean() {
     rm -rf out
 }
 
-export KBUILD_BUILD_HOST=Virtuosa
+export KBUILD_BUILD_HOST=Nian
 export KBUILD_BUILD_USER="AkuFarish"
-export KBUILD_COMPILER_STRING="Virtuosa"
 
 function build_kernel() {
-    export PATH="/home/akufarish/proton/bin:$PATH"
+    export PATH="/workspace/kernel_realme_RMX1851_silont/weebx/bin:$PATH"
     make -j$(nproc --all) O=out ARCH=arm64 virtuosa_defconfig
     make -j$(nproc --all) ARCH=arm64 O=out \
                           CC=clang \
