@@ -1575,14 +1575,6 @@ static int inode_doinit_with_dentry(struct inode *inode, struct dentry *opt_dent
 out:
 	spin_lock(&isec->lock);
 	if (isec->initialized == LABEL_PENDING) {
-		if (!sid || rc) {
-			isec->initialized = LABEL_INVALID;
-			goto out_unlock;
-		}
-
-out:
-	spin_lock(&isec->lock);
-	if (isec->initialized == LABEL_PENDING) {
 		if (rc) {
 			isec->initialized = LABEL_INVALID;
 			goto out_unlock;
