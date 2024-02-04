@@ -1283,7 +1283,7 @@ void check_local_cpu_capabilities(void)
 static void __init setup_feature_capabilities(void)
 {
 	update_cpu_capabilities(arm64_features, "detected feature:");
-	enable_cpu_capabilities(arm64_features, "enabling feature:");
+	enable_cpu_capabilities(arm64_features);
 }
 
 DEFINE_STATIC_KEY_FALSE(arm64_const_caps_ready);
