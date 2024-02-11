@@ -26,10 +26,10 @@ function clean() {
 
 export KBUILD_BUILD_HOST=Virtuosa
 export KBUILD_BUILD_USER="AkuFarish"
-export KBUILD_COMPILER_STRING="Virtuosa"
+# export KBUILD_COMPILER_STRING="Virtuosa"
 
 function build_kernel() {
-    export PATH="/home/akufarish/clang-19/bin:$PATH"
+    export PATH="/home/akufarish/clang-18/bin:$PATH"
     make -j$(nproc --all) O=out ARCH=arm64 virtuosa_defconfig
     make -j$(nproc --all) ARCH=arm64 O=out \
                           CC=clang \
