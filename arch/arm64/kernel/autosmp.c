@@ -33,6 +33,8 @@
 #include <linux/fb.h>
 
 #define ASMP_TAG "AutoSMP: "
+#define ASMP_ENABLE true
+
 
 struct asmp_load_data {
     u64 prev_cpu_idle;
@@ -50,6 +52,7 @@ static struct notifier_block asmp_nb;
 static bool started = false;
 
 static struct asmp_param_struct {
+    bool enabled;
     unsigned int delay;
     bool scroff_single_core;
     unsigned int max_cpus_bc;
@@ -63,15 +66,16 @@ static struct asmp_param_struct {
     unsigned int cycle_up;
     unsigned int cycle_down;
 } asmp_param = {
+    .enabled = ASMP_ENABLE,
     .delay = 100,
     .scroff_single_core = true,
     .max_cpus_bc = 4, /* Max cpu Big cluster ! */
     .max_cpus_lc = 4, /* Max cpu Little cluster ! */
-    .min_cpus_bc = 2, /* Minimum Big cluster online */
-    .min_cpus_lc = 2, /* Minimum Little cluster online */
+    .min_cpus_bc = 1, /* Minimum Big cluster online */
+    .min_cpus_lc = 1, /* Minimum Little cluster online */
     .cpufreq_up_bc = 80,
-    .cpufreq_up_lc = 70,
-    .cpufreq_down_bc = 25,
+    .cpufreq_up_lc = 60,
+    .cpufreq_down_bc = 40,
     .cpufreq_down_lc = 30,
     .cycle_up = 1,
     .cycle_down = 1,
@@ -79,7 +83,6 @@ static struct asmp_param_struct {
 
 static unsigned int cycle = 0, delay0 = 0;
 static unsigned long delay_jif = 0;
-int asmp_enabled __read_mostly = 0;
 
 static void asmp_online_cpus(unsigned int cpu)
 {
@@ -131,7 +134,7 @@ static int get_cpu_loads(unsigned int cpu)
         max_load = load;
 
     return max_load;
-}
+} 
 
 static void update_prev_idle(unsigned int cpu)
 {
@@ -143,7 +146,7 @@ static void update_prev_idle(unsigned int cpu)
 
 static void __ref asmp_work_fn(struct work_struct *work) {
     unsigned int cpu = 0, load = 0;
-    unsigned int slow_cpu_bc = 0, slow_cpu_lc = 4;
+    unsigned int slow_cpu_bc = 4, slow_cpu_lc = 0;
     unsigned int cpu_load_bc = 0, fast_load_bc = 0;
     unsigned int cpu_load_lc = 0, fast_load_lc = 0;
     unsigned int slow_load_lc = 100, slow_load_bc = 100;
@@ -154,10 +157,10 @@ static void __ref asmp_work_fn(struct work_struct *work) {
     int nr_cpu_online_lc = 0, nr_cpu_online_bc = 0;
 
     /* Perform always check cpu 0/4 */
-    if (!cpu_online(4))
-        asmp_online_cpus(4);
     if (!cpu_online(0))
         asmp_online_cpus(0);
+    if (!cpu_online(4))
+        asmp_online_cpus(4);
 
     cycle++;
 
@@ -180,12 +183,12 @@ static void __ref asmp_work_fn(struct work_struct *work) {
 
     /* find current max and min cpu freq to estimate load */
     get_online_cpus();
-    cpu_load_lc = get_cpu_loads(4);
+    cpu_load_lc = get_cpu_loads(0);
     fast_load_lc = cpu_load_lc;
-    cpu_load_bc = get_cpu_loads(0);
+    cpu_load_bc = get_cpu_loads(4);
     fast_load_bc = cpu_load_bc;
     for_each_online_cpu(cpu) {
-        if (cpu && cpu < 4) {
+        if (cpu > 4) {
             nr_cpu_online_bc++;
             load = get_cpu_loads(cpu);
             if (load < slow_load_bc) {
@@ -195,7 +198,7 @@ static void __ref asmp_work_fn(struct work_struct *work) {
                 fast_load_bc = load;
         }
 
-        if (cpu > 4) {
+        if (cpu && cpu < 4) {
             nr_cpu_online_lc++;
             load = get_cpu_loads(cpu);
             if (load < slow_load_lc) {
@@ -208,25 +211,25 @@ static void __ref asmp_work_fn(struct work_struct *work) {
     put_online_cpus();
 
     /********************************************************************
-     *                     Little Cluster cpu(4..7)                     *
+     *                     Little Cluster cpu(0..3)                     *
      ********************************************************************/
     if (cpu_load_lc < slow_load_lc)
         slow_load_lc = cpu_load_lc;
 
-    /* Always check cpu 4 before + up nr */
-    if (cpu_online(4))
+    /* Always check cpu 0 before + up nr */
+    if (cpu_online(0))
         nr_cpu_online_lc += 1;
 
     /* hotplug one core if all online cores are over up_load limit */
     if (slow_load_lc > up_load_lc) {
         if ((nr_cpu_online_lc < max_cpu_lc) &&
             (cycle >= asmp_param.cycle_up)) {
-            cpu = cpumask_next_zero(4, cpu_online_mask);
+            cpu = cpumask_next_zero(0, cpu_online_mask);
             asmp_online_cpus(cpu);
             cycle = 0;
         }
     /* unplug slowest core if all online cores are under down_load limit */
-    } else if ((slow_cpu_lc > 4) && (fast_load_lc < down_load_lc)) {
+    } else if (slow_cpu_lc && (fast_load_lc < down_load_lc)) {
         if ((nr_cpu_online_lc > min_cpu_lc) &&
             (cycle >= asmp_param.cycle_down)) {
             asmp_offline_cpus(slow_cpu_lc);
@@ -235,25 +238,25 @@ static void __ref asmp_work_fn(struct work_struct *work) {
     }
 
     /********************************************************************
-     *                      Big Cluster cpu(0..3)                       *
+     *                      Big Cluster cpu(4..7)                       *
      ********************************************************************/
     if (cpu_load_bc < slow_load_bc)
         slow_load_bc = cpu_load_bc;
 
-    /* Always check cpu 0 before + up nr */
-    if (cpu_online(0))
+    /* Always check cpu 4 before + up nr */
+    if (cpu_online(4))
         nr_cpu_online_bc += 1;
 
     /* hotplug one core if all online cores are over up_load limit */
     if (slow_load_bc > up_load_bc) {
         if ((nr_cpu_online_bc < max_cpu_bc) &&
             (cycle >= asmp_param.cycle_up)) {
-            cpu = cpumask_next_zero(0, cpu_online_mask);
+            cpu = cpumask_next_zero(4, cpu_online_mask);
             asmp_online_cpus(cpu);
             cycle = 0;
         }
     /* unplug slowest core if all online cores are under down_load limit */
-    } else if (slow_cpu_bc && (fast_load_bc < down_load_bc)) {
+    } else if ((slow_cpu_bc > 4) && (fast_load_bc < down_load_bc)) {
         if ((nr_cpu_online_bc > min_cpu_bc) &&
             (cycle >= asmp_param.cycle_down)) {
             asmp_offline_cpus(slow_cpu_bc);
@@ -372,7 +375,7 @@ static int __ref asmp_start(void)
 
 err_out:
 
-    asmp_enabled = 0;
+    asmp_param.enabled = false;
     return ret;
 }
 
@@ -407,7 +410,7 @@ static int set_enabled(const char *val,
     int ret;
 
     ret = param_set_bool(val, kp);
-    if (asmp_enabled) {
+    if (asmp_param.enabled) {
 
         asmp_start();
 
@@ -424,7 +427,7 @@ static struct kernel_param_ops module_ops = {
     .get = param_get_bool,
 };
 
-module_param_cb(enabled, &module_ops, &asmp_enabled, 0644);
+module_param_cb(enabled, &module_ops, &asmp_param.enabled, 0644);
 MODULE_PARM_DESC(enabled, "hotplug/unplug cpu cores based on cpu load");
 
 /***************************** SYSFS START *****************************/
@@ -434,14 +437,6 @@ struct global_attr {
     ssize_t (*show)(struct kobject *, struct attribute *, char *);
     ssize_t (*store)(struct kobject *, struct attribute *, const char *, size_t);
 };
-
-#define define_one_global_ro(_name)                 \
-static struct global_attr _name =                   \
-__ATTR(_name, 0444, show_##_name, NULL)
-
-#define define_one_global_rw(_name)                 \
-static struct global_attr _name =                   \
-__ATTR(_name, 0644, show_##_name, store_##_name)
 
 struct kobject *asmp_kobject;
 
@@ -610,6 +605,9 @@ static int __init asmp_init(void) {
         pr_warn(ASMP_TAG"ERROR, create sysfs kobj");
 
     pr_info(ASMP_TAG"initialized\n");
+    
+    if (asmp_param.enabled)
+        asmp_start();
 
     return 0;
 }
