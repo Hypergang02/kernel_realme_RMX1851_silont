@@ -79,6 +79,36 @@ bool elv_bio_merge_ok(struct request *rq, struct bio *bio)
 }
 EXPORT_SYMBOL(elv_bio_merge_ok);
 
+/*
+ * Query io scheduler to see if the current process issuing bio may be
+ * merged with rq.
+ */
+static int elv_iosched_allow_merge(struct request *rq, struct bio *bio)
+{
+	struct request_queue *q = rq->q;
+	struct elevator_queue *e = q->elevator;
+
+	if (e->type->ops.elevator_allow_merge_fn)
+		return e->type->ops.elevator_allow_merge_fn(q, rq, bio);
+
+	return 1;
+}
+
+/*
+ * can we safely merge with this request?
+ */
+bool elv_rq_merge_ok(struct request *rq, struct bio *bio)
+{
+	if (!blk_rq_merge_ok(rq, bio))
+		return 0;
+
+	if (!elv_iosched_allow_merge(rq, bio))
+		return 0;
+
+	return 1;
+}
+EXPORT_SYMBOL(elv_rq_merge_ok);
+
 static struct elevator_type *elevator_find(const char *name)
 {
 	struct elevator_type *e;
