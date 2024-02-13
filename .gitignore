@@ -127,3 +127,4 @@ Android.bp
 out
 *.rej
 out/*
+AnyKernel

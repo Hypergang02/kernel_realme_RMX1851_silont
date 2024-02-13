@@ -5,6 +5,10 @@ git submodule init
 
 git submodule update --remote
 
+rm -rf AnyKernel
+
+git clone https://github.com/akufarish/AnyKernel3.git AnyKernel
+TANGGAL=$(date +"%F-%S")
 
 # setup color
 red='\033[0;31m'
@@ -39,6 +43,7 @@ function build_kernel() {
         echo -e "\n"
         echo -e "$green << compile kernel success! >> \n$white"
         echo -e "\n"
+        cp out/arch/arm64/boot/Image.gz-dtb AnyKernel
     else
         echo -e "\n"
         echo -e "$red << compile kernel failed! >> \n$white"
@@ -46,6 +51,14 @@ function build_kernel() {
     fi
 }
 
+# Zipping
+function zipping() {
+    cd AnyKernel || exit 1
+    zip -r9 Virtuosa-Kernel-${TANGGAL}.zip *
+    cd ..
+}
+
 # execute
 clean
 build_kernel
+zipping
