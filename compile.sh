@@ -28,12 +28,12 @@ function clean() {
     rm -rf out
 }
 
-export KBUILD_BUILD_HOST=Virtuosa
-export KBUILD_BUILD_USER="AkuFarish"
+export KBUILD_BUILD_HOST=Play
+export KBUILD_BUILD_USER="Pragmatic"
 # export KBUILD_COMPILER_STRING="Virtuosa"
 
 function build_kernel() {
-    export PATH="/home/akufarish/clang-18/bin:$PATH"
+    export PATH="/workspace/kernel_realme_RMX1851_silont/zyc/bin:$PATH"
     make -j$(nproc --all) O=out ARCH=arm64 virtuosa_defconfig
     make -j$(nproc --all) ARCH=arm64 O=out \
                           CC=clang \
@@ -54,7 +54,7 @@ function build_kernel() {
 # Zipping
 function zipping() {
     cd AnyKernel || exit 1
-    zip -r9 Virtuosa-Kernel-${TANGGAL}.zip *
+    zip -r9 Zyc-Kernel-${TANGGAL}.zip *
     cd ..
 }
 
