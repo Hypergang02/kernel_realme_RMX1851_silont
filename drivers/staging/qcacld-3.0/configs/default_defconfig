@@ -340,7 +340,6 @@ CONFIG_WLAN_LOG_FATAL := n
 CONFIG_WLAN_LOG_ERROR := n
 CONFIG_WLAN_LOG_WARN := n
 CONFIG_WLAN_LOG_INFO := n
-CONFIG_WLAN_LOG_DEBUG := n
 
 #Enable OL debug and wmi unified functions
 CONFIG_ATH_PERF_PWR_OFFLOAD := y
@@ -520,9 +519,6 @@ CONFIG_WLAN_FEATURE_P2P_DEBUG := n
 #Flag to enable DFS Master feature
 CONFIG_WLAN_DFS_MASTER_ENABLE := y
 
-#Flag to enable/disable MTRACE feature
-CONFIG_ENABLE_MTRACE_LOG := n
-
 #Flag to enable nud tracking feature
 CONFIG_WLAN_NUD_TRACKING := n
 
@@ -662,7 +658,7 @@ CONFIG_DEBUG_RX_RING_BUFFER := y
 #Enable Hash debug
 CONFIG_RX_HASH_DEBUG := y
 
-CONFIG_WLAN_HANG_EVENT := y
+CONFIG_WLAN_HANG_EVENT := n
 
 #Enable optimize size
 CONFIG_ENABLE_SIZE_OPTIMIZE := y
