@@ -5187,6 +5187,7 @@ void lim_send_mgmt_frame_tx(tpAniSirGlobal mac_ctx,
 	tpSirMacMgmtHdr mac_hdr;
 
 	msg_len = mb_msg->msg_len - sizeof(*mb_msg);
+
 #ifdef WLAN_DEBUG
 	pe_debug("sending fc->type: %d fc->subType: %d",
 		fc->type, fc->subType);
